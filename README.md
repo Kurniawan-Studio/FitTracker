@@ -1,0 +1,1 @@
+Aplikasi FitTrack adalah aplikasi pelacak kesehatan dan kebugaran (fitness tracker) yang dirancang untuk membantu pengguna memantau aktivitas fisik, kesehatan tubuh, dan progres latihan mereka secara digital.
