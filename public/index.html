@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FitTrack - Jadwal Latihan & Dream Body</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- React 18 & ReactDOM -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <!-- Babel for running JSX in browser -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body { background-color: #09090b; color: #f4f4f5; font-family: system-ui, -apple-system, sans-serif; }
+  </style>
+</head>
+<body class="bg-zinc-950 text-zinc-100 min-h-screen">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    // Database Gerakan
+    const EXERCISES = [
+      { id: 'bb-bench', name: 'Barbell Bench Press', cat: 'Dada', eq: 'barbell', sets: '3-4 Set', reps: '8-12 Reps', desc: 'Latihan utama untuk ketebalan otot dada, trisep, dan bahu depan.' },
+      { id: 'bw-pushup', name: 'Standard Push-Up', cat: 'Dada', eq: 'bodyweight', sets: '3-4 Set', reps: '15-20 Reps', desc: 'Gerakan dasar kalistenik untuk membentuk dada dan kekuatan core.' },
+      { id: 'bb-squat', name: 'Barbell Back Squat', cat: 'Kaki', eq: 'barbell', sets: '4 Set', reps: '6-10 Reps', desc: 'Raja latihan kaki untuk paha depan, paha belakang, dan glutes.' },
+      { id: 'bw-squat', name: 'Air Squat / Bodyweight', cat: 'Kaki', eq: 'bodyweight', sets: '4 Set', reps: '20-25 Reps', desc: 'Latihan kaki tanpa alat yang aman untuk pemula.' },
+      { id: 'bb-row', name: 'Bent-Over Barbell Row', cat: 'Punggung', eq: 'barbell', sets: '4 Set', reps: '8-12 Reps', desc: 'Membangun punggung tebal dan memperbaiki postur tubuh.' },
+      { id: 'bw-pullup', name: 'Pull-Up / Chin-Up', cat: 'Punggung', eq: 'bodyweight', sets: '3-4 Set', reps: '6-12 Reps', desc: 'Gerakan terbaik untuk melebarkan sayap punggung (V-Taper).' },
+      { id: 'bb-ohp', name: 'Barbell Overhead Press', cat: 'Bahu', eq: 'barbell', sets: '3 Set', reps: '8-10 Reps', desc: 'Membentuk bahu bulat kokoh dan kekuatan menekan ke atas.' },
+      { id: 'bw-pike', name: 'Pike Push-Up', cat: 'Bahu', eq: 'bodyweight', sets: '3 Set', reps: '10-15 Reps', desc: 'Variasi push up sudut untuk fokus ke otot bahu tanpa beban.' },
+      { id: 'bb-curl', name: 'Barbell Bicep Curl', cat: 'Lengan', eq: 'barbell', sets: '3 Set', reps: '10-12 Reps', desc: 'Fokus isolasi untuk pembentukan puncak otot bisep.' },
+      { id: 'bw-dips', name: 'Bench Dips', cat: 'Lengan', eq: 'bodyweight', sets: '3 Set', reps: '12-15 Reps', desc: 'Gerakan trisep menggunakan kursi/bangku.' },
+      { id: 'bw-plank', name: 'Plank Hold', cat: 'Perut', eq: 'bodyweight', sets: '3 Set', reps: '45-60 Detik', desc: 'Mengencangkan otot perut dan melatih kestabilan tulang belakang.' }
+    ];
+
+    const DEFAULT_SCHEDULE = [
+      { day: 'Senin', title: 'Dada, Bahu & Trisep (Push)', focus: 'Push Day', items: ['bb-bench', 'bw-pushup', 'bb-ohp', 'bw-dips'] },
+      { day: 'Selasa', title: 'Punggung & Bisep (Pull)', focus: 'Pull Day', items: ['bb-row', 'bw-pullup', 'bb-curl'] },
+      { day: 'Rabu', title: 'Kaki & Perut (Legs & Core)', focus: 'Legs Day', items: ['bb-squat', 'bw-squat', 'bw-plank'] },
+      { day: 'Kamis', title: 'Istirahat Aktif / Recovery', focus: 'Rest Day', items: [] },
+      { day: 'Jumat', title: 'Dada & Punggung (Upper)', focus: 'Upper Body', items: ['bb-bench', 'bb-row', 'bw-pullup'] },
+      { day: 'Sabtu', title: 'Kaki & Bahu (Lower & Delts)', focus: 'Lower & Shoulders', items: ['bb-squat', 'bb-ohp', 'bw-plank'] },
+      { day: 'Minggu', title: 'Full Istirahat / Peregangan', focus: 'Rest Day', items: [] }
+    ];
+
+    function App() {
+      const [tab, setTab] = useState('schedule');
+      const [schedule, setSchedule] = useState(() => {
+        const saved = localStorage.getItem('fittrack_schedule');
+        return saved ? JSON.parse(saved) : DEFAULT_SCHEDULE;
+      });
+      const [checkedSets, setCheckedSets] = useState(() => {
+        const saved = localStorage.getItem('fittrack_checked');
+        return saved ? JSON.parse(saved) : {};
+      });
+      const [filterCategory, setFilterCategory] = useState('Semua');
+      const [filterEquipment, setFilterEquipment] = useState('all');
+      
+      // Timer state
+      const [timerOpen, setTimerOpen] = useState(false);
+      const [timeLeft, setTimeLeft] = useState(60);
+      const [timerActive, setTimerActive] = useState(false);
+
+      // Dream body state
+      const [weight, setWeight] = useState(() => localStorage.getItem('fittrack_weight') || '65');
+      const [height, setHeight] = useState(() => localStorage.getItem('fittrack_height') || '170');
+      const [targetWeight, setTargetWeight] = useState(() => localStorage.getItem('fittrack_target') || '68');
+
+      useEffect(() => {
+        localStorage.setItem('fittrack_schedule', JSON.stringify(schedule));
+      }, [schedule]);
+
+      useEffect(() => {
+        localStorage.setItem('fittrack_checked', JSON.stringify(checkedSets));
+      }, [checkedSets]);
+
+      useEffect(() => {
+        let interval = null;
+        if (timerActive && timeLeft > 0) {
+          interval = setInterval(() => setTimeLeft(t => t - 1), 1000);
+        } else if (timeLeft === 0 && timerActive) {
+          setTimerActive(false);
+          alert('Waktu istirahat selesai! Ayo mulai set berikutnya!');
+        }
+        return () => clearInterval(interval);
+      }, [timerActive, timeLeft]);
+
+      const toggleCheck = (id) => {
+        setCheckedSets(prev => ({ ...prev, [id]: !prev[id] }));
+      };
+
+      // Kalkulasi BMI
+      const hM = Number(height) / 100;
+      const bmi = hM > 0 ? (Number(weight) / (hM * hM)).toFixed(1) : 0;
+
+      const filteredExercises = EXERCISES.filter(ex => {
+        const matchCat = filterCategory === 'Semua' || ex.cat === filterCategory;
+        const matchEq = filterEquipment === 'all' || ex.eq === filterEquipment;
+        return matchCat && matchEq;
+      });
+
+      return (
+        <div className="max-w-4xl mx-auto px-4 py-6 pb-24">
+          {/* Header */}
+          <header className="flex items-center justify-between border-b border-zinc-800 pb-4 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-lime-400 text-zinc-950 font-black flex items-center justify-center text-xl shadow-lg shadow-lime-400/20">
+                ⚡
+              </div>
+              <div>
+                <h1 className="text-xl font-extrabold tracking-tight">Fit<span className="text-lime-400">Track</span></h1>
+                <p className="text-xs text-zinc-400">Latihan Barbel & Bodyweight</p>
+              </div>
+            </div>
+            <button 
+              onClick={() => { setTimerOpen(true); setTimeLeft(60); setTimerActive(false); }}
+              className="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-lime-400 text-xs font-bold border border-zinc-700 flex items-center gap-1.5"
+            >
+              ⏱️ <span>Timer Istirahat</span>
+            </button>
+          </header>
+
+          {/* Navigasi Tab */}
+          <div className="grid grid-cols-3 gap-2 p-1 bg-zinc-900 rounded-xl mb-6 text-sm font-semibold border border-zinc-800">
+            <button 
+              onClick={() => setTab('schedule')} 
+              className={`py-2 rounded-lg transition-all ${tab === 'schedule' ? 'bg-lime-400 text-zinc-950 font-bold' : 'text-zinc-400 hover:text-white'}`}
+            >
+              📅 Jadwal
+            </button>
+            <button 
+              onClick={() => setTab('library')} 
+              className={`py-2 rounded-lg transition-all ${tab === 'library' ? 'bg-lime-400 text-zinc-950 font-bold' : 'text-zinc-400 hover:text-white'}`}
+            >
+              📖 Gerakan
+            </button>
+            <button 
+              onClick={() => setTab('dreambody')} 
+              className={`py-2 rounded-lg transition-all ${tab === 'dreambody' ? 'bg-lime-400 text-zinc-950 font-bold' : 'text-zinc-400 hover:text-white'}`}
+            >
+              🎯 Body Goals
+            </button>
+          </div>
+
+          {/* TAB 1: JADWAL LATIHAN */}
+          {tab === 'schedule' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold text-white">Jadwal Latihan Mingguan</h2>
+                <button 
+                  onClick={() => setCheckedSets({})}
+                  className="text-xs text-zinc-400 hover:text-red-400"
+                >
+                  Reset Centang
+                </button>
+              </div>
+
+              {schedule.map((dayItem, idx) => (
+                <div key={idx} className="p-4 bg-zinc-900/80 border border-zinc-800 rounded-xl">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-bold px-2 py-0.5 rounded bg-lime-400/10 text-lime-400 border border-lime-400/20">
+                      {dayItem.day}
+                    </span>
+                    <span className="text-xs text-zinc-400 font-medium">{dayItem.focus}</span>
+                  </div>
+                  <h3 className="font-bold text-white text-sm mb-3">{dayItem.title}</h3>
+
+                  {dayItem.items.length === 0 ? (
+                    <p className="text-xs text-zinc-500 italic">Hari istirahat pemulihan otot (Rest Day).</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {dayItem.items.map(exId => {
+                        const ex = EXERCISES.find(e => e.id === exId);
+                        if (!ex) return null;
+                        const isDone = !!checkedSets[`${dayItem.day}-${exId}`];
+                        return (
+                          <div 
+                            key={exId} 
+                            onClick={() => toggleCheck(`${dayItem.day}-${exId}`)}
+                            className={`p-2.5 rounded-lg border flex items-center justify-between cursor-pointer transition-all ${
+                              isDone ? 'bg-lime-950/20 border-lime-500/40 opacity-70' : 'bg-zinc-800/60 border-zinc-700/50 hover:border-zinc-600'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <input 
+                                type="checkbox" 
+                                checked={isDone} 
+                                onChange={() => {}} 
+                                className="w-4 h-4 accent-lime-400 rounded cursor-pointer"
+                              />
+                              <div>
+                                <h4 className={`text-xs font-semibold ${isDone ? 'line-through text-zinc-400' : 'text-white'}`}>
+                                  {ex.name}
+                                </h4>
+                                <span className="text-[10px] text-zinc-400">{ex.sets} • {ex.reps}</span>
+                              </div>
+                            </div>
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded ${ex.eq === 'barbell' ? 'bg-amber-400/10 text-amber-400' : 'bg-emerald-400/10 text-emerald-400'}`}>
+                              {ex.eq === 'barbell' ? 'Barbel' : 'Bodyweight'}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* TAB 2: KATALOG GERAKAN */}
+          {tab === 'library' && (
+            <div>
+              <div className="flex flex-wrap gap-2 mb-4">
+                {['Semua', 'Dada', 'Punggung', 'Kaki', 'Bahu', 'Lengan', 'Perut'].map(cat => (
+                  <button 
+                    key={cat}
+                    onClick={() => setFilterCategory(cat)}
+                    className={`px-3 py-1 rounded-full text-xs font-medium ${filterCategory === cat ? 'bg-lime-400 text-zinc-950 font-bold' : 'bg-zinc-900 text-zinc-400 border border-zinc-800'}`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                {filteredExercises.map(ex => (
+                  <div key={ex.id} className="p-4 bg-zinc-900 border border-zinc-800 rounded-xl">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-bold text-lime-400">{ex.cat}</span>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded ${ex.eq === 'barbell' ? 'bg-amber-400/10 text-amber-300' : 'bg-emerald-400/10 text-emerald-300'}`}>
+                        {ex.eq === 'barbell' ? 'Barbel' : 'Tanpa Alat'}
+                      </span>
+                    </div>
+                    <h3 className="font-bold text-white text-sm mb-1">{ex.name}</h3>
+                    <p className="text-xs text-zinc-400 mb-3">{ex.desc}</p>
+                    <div className="flex items-center justify-between text-xs text-zinc-400 border-t border-zinc-800/80 pt-2">
+                      <span>Anjuran: <strong className="text-zinc-200">{ex.sets} x {ex.reps}</strong></span>
+                      <a 
+                        href={`https://www.youtube.com/results?search_query=cara+latihan+${encodeURIComponent(ex.name)}`} 
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="text-lime-400 hover:underline font-bold"
+                      >
+                        Lihat Video ↗
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* TAB 3: DREAM BODY GOALS */}
+          {tab === 'dreambody' && (
+            <div className="space-y-4">
+              <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-xl">
+                <h3 className="font-bold text-white text-sm mb-3">Statistik & Target Tubuh</h3>
+                <div className="grid grid-cols-3 gap-3 mb-4">
+                  <div>
+                    <label className="text-[11px] text-zinc-400 block mb-1">Berat Saat Ini (kg)</label>
+                    <input 
+                      type="number" 
+                      value={weight} 
+                      onChange={e => { setWeight(e.target.value); localStorage.setItem('fittrack_weight', e.target.value); }} 
+                      className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-2 text-white font-bold text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] text-zinc-400 block mb-1">Tinggi Badan (cm)</label>
+                    <input 
+                      type="number" 
+                      value={height} 
+                      onChange={e => { setHeight(e.target.value); localStorage.setItem('fittrack_height', e.target.value); }} 
+                      className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-2 text-white font-bold text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] text-zinc-400 block mb-1">Target Berat (kg)</label>
+                    <input 
+                      type="number" 
+                      value={targetWeight} 
+                      onChange={e => { setTargetWeight(e.target.value); localStorage.setItem('fittrack_target', e.target.value); }} 
+                      className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-2 text-white font-bold text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div className="p-3 bg-zinc-800/80 rounded-lg flex items-center justify-between">
+                  <div>
+                    <span className="text-xs text-zinc-400">Skor Indeks Massa Tubuh (BMI):</span>
+                    <h4 className="text-lg font-black text-lime-400">{bmi}</h4>
+                  </div>
+                  <span className="text-xs px-2 py-1 rounded bg-zinc-700 text-zinc-200">
+                    {bmi < 18.5 ? 'Kurus / Butuh Surplus' : bmi <= 24.9 ? 'Ideal / Proporsional' : 'Surplus / Bulking'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-xl text-center">
+                <h3 className="font-bold text-white text-sm mb-1">Target Bentuk Tubuh Impian</h3>
+                <p className="text-xs text-zinc-400 mb-4">Konsisten jalankan jadwal latihan mingguan & penuhi asupan protein!</p>
+                <div className="h-32 bg-zinc-800/50 border border-dashed border-zinc-700 rounded-xl flex flex-col items-center justify-center p-4">
+                  <span className="text-2xl mb-1">💪</span>
+                  <span className="text-xs font-semibold text-zinc-300">Target: Tubuh Berotot Kering & Atletis</span>
+                  <span className="text-[10px] text-zinc-500">Progress tersimpan di memori HP Anda</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TIMER MODAL */}
+          {timerOpen && (
+            <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+              <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 max-w-xs w-full text-center">
+                <h3 className="text-sm font-bold text-zinc-300 mb-1">Timer Istirahat Antar Set</h3>
+                <div className="text-5xl font-black text-lime-400 my-4 tracking-wider">
+                  {Math.floor(timeLeft / 60)}:{('0' + (timeLeft % 60)).slice(-2)}
+                </div>
+                <div className="flex justify-center gap-2 mb-4">
+                  {[30, 60, 90].map(s => (
+                    <button 
+                      key={s} 
+                      onClick={() => { setTimeLeft(s); setTimerActive(false); }}
+                      className="px-2.5 py-1 rounded bg-zinc-800 text-xs font-bold text-zinc-300 hover:bg-zinc-700"
+                    >
+                      {s}s
+                    </button>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => setTimerActive(!timerActive)}
+                    className="flex-1 py-2.5 rounded-xl bg-lime-400 text-zinc-950 font-extrabold text-sm"
+                  >
+                    {timerActive ? 'Jeda' : 'Mulai'}
+                  </button>
+                  <button 
+                    onClick={() => setTimerOpen(false)}
+                    className="px-4 py-2.5 rounded-xl bg-zinc-800 text-zinc-300 text-sm font-bold"
+                  >
+                    Tutup
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</body>
+</html>
