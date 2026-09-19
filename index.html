@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Workout Tracker</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={theme:{extend:{colors:{limeSport:"#B6FF00"}}}}</script>
+<style>
+html{scroll-behavior:smooth}body{background:radial-gradient(circle at top right,rgba(182,255,0,.07),transparent 30%),#09090b}
+.glass{background:rgba(24,24,27,.82);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.07)}
+.exercise-card{transition:.2s}.exercise-card:hover{transform:translateY(-3px);border-color:rgba(182,255,0,.35)}
+input,select{color-scheme:dark}input[type=file]::file-selector-button{background:#B6FF00;color:#09090b;border:0;padding:8px 12px;border-radius:8px;font-weight:700}
+</style>
+</head>
+<body class="min-h-screen text-zinc-100">
+<header class="sticky top-0 z-50 border-b border-zinc-800 bg-zinc-950/90 backdrop-blur-xl">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
+<div class="flex items-center gap-3"><div class="w-10 h-10 rounded-xl bg-limeSport text-zinc-950 flex items-center justify-center font-black text-xl">W</div>
+<div><h1 class="font-black text-lg sm:text-xl">WORKOUT<span class="text-limeSport">TRACKER</span></h1><p class="text-[10px] uppercase tracking-[.25em] text-zinc-500">Train • Track • Transform</p></div></div>
+<div class="hidden sm:flex items-center gap-2 text-xs text-zinc-500"><span class="w-2 h-2 rounded-full bg-limeSport animate-pulse"></span>Data tersimpan otomatis</div>
+</div></header>
+
+<main class="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+<section class="grid lg:grid-cols-[1.4fr_.6fr] gap-6">
+<div class="glass rounded-3xl p-6 sm:p-8"><span class="inline-flex px-3 py-1 rounded-full bg-limeSport/10 text-limeSport border border-limeSport/20 text-xs font-bold">🔥 YOUR TRANSFORMATION</span>
+<h2 class="mt-5 text-4xl sm:text-5xl lg:text-6xl font-black leading-none">BUILD YOUR <span class="text-limeSport">DREAM BODY.</span></h2>
+<p class="mt-5 max-w-xl text-zinc-400">Tetapkan target visualmu, catat latihan, dan pantau konsistensi workout setiap hari.</p>
+<a href="#workout-logger" class="inline-flex mt-7 bg-limeSport text-zinc-950 px-5 py-3 rounded-xl font-black">Mulai Workout ↓</a></div>
+<div class="grid grid-cols-2 lg:grid-cols-1 gap-4"><div class="glass rounded-3xl p-5"><p class="text-xs text-zinc-500 uppercase">Total Workout</p><p id="totalWorkout" class="mt-2 text-4xl font-black text-limeSport">0</p><p class="text-xs text-zinc-500">sesi tercatat</p></div><div class="glass rounded-3xl p-5"><p class="text-xs text-zinc-500 uppercase">Total Volume</p><p id="totalVolume" class="mt-2 text-4xl font-black text-cyan-400">0</p><p class="text-xs text-zinc-500">kg total</p></div></div>
+</section>
+
+<section class="glass rounded-3xl p-5 sm:p-7">
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6"><div><p class="text-xs text-limeSport font-bold uppercase tracking-[.2em]">Goal Setting</p><h2 class="text-2xl sm:text-3xl font-black">Dream Body</h2><p class="text-sm text-zinc-500">Upload foto tubuh impianmu sebagai pengingat target.</p></div>
+<label for="dreamBodyInput" class="cursor-pointer inline-flex justify-center gap-2 px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 hover:border-limeSport hover:text-limeSport text-sm font-bold">📷 Upload Foto</label><input id="dreamBodyInput" type="file" accept="image/*" class="hidden"></div>
+<div id="dreamBodyEmpty" class="min-h-[260px] rounded-2xl border-2 border-dashed border-zinc-800 flex flex-col items-center justify-center text-center p-6"><div class="text-5xl mb-4">🏆</div><h3 class="font-bold text-lg">Belum ada Dream Body</h3><p class="text-sm text-zinc-500">Upload foto inspirasi. Foto tersimpan otomatis di browser.</p></div>
+<div id="dreamBodyPreview" class="hidden relative rounded-2xl overflow-hidden bg-zinc-950 border border-zinc-800"><img id="dreamBodyImage" class="w-full max-h-[550px] object-contain mx-auto"><button id="removeDreamBody" class="absolute top-4 right-4 px-3 py-2 rounded-lg bg-red-500 text-white text-sm font-bold">Hapus Foto</button></div>
+</section>
+
+<section><div class="mb-6"><p class="text-xs text-cyan-400 font-bold uppercase tracking-[.2em]">Exercise Library</p><h2 class="text-2xl sm:text-3xl font-black">Latihan Efektif</h2><p class="text-sm text-zinc-500">Daftar latihan utama berdasarkan kelompok otot.</p></div><div id="exerciseGrid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4"></div></section>
+
+<section id="workout-logger" class="glass rounded-3xl p-5 sm:p-7">
+<div class="mb-7"><p class="text-xs text-orange-400 font-bold uppercase tracking-[.2em]">Workout Logger</p><h2 class="text-2xl sm:text-3xl font-black">Catat Latihan Hari Ini</h2><p class="text-sm text-zinc-500">Setiap catatan tersimpan otomatis di browser.</p></div>
+<form id="workoutForm" class="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
+<div class="lg:col-span-2"><label class="block text-xs font-bold text-zinc-400 uppercase mb-2">Latihan</label><select id="exerciseSelect" required class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 outline-none focus:border-limeSport"><option value="">Pilih latihan...</option></select></div>
+<div><label class="block text-xs font-bold text-zinc-400 uppercase mb-2">Set</label><input id="setsInput" type="number" min="1" required placeholder="3" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3"></div>
+<div><label class="block text-xs font-bold text-zinc-400 uppercase mb-2">Repetisi</label><input id="repsInput" type="number" min="1" required placeholder="10" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3"></div>
+<div><label class="block text-xs font-bold text-zinc-400 uppercase mb-2">Beban (kg)</label><input id="weightInput" type="number" min="0" step=".5" required placeholder="20" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3"></div>
+<div class="sm:col-span-2 lg:col-span-5 flex justify-end"><button class="w-full sm:w-auto px-6 py-3 rounded-xl bg-limeSport text-zinc-950 font-black">＋ Tambah Latihan</button></div>
+</form>
+<div class="mt-8"><div class="flex justify-between mb-4"><div><h3 class="font-black text-lg">Riwayat Workout</h3><p class="text-xs text-zinc-500">Semua aktivitas yang sudah dicatat.</p></div><button id="clearAllBtn" class="hidden text-xs font-bold text-red-400">Hapus Semua</button></div>
+<div class="hidden md:block overflow-x-auto rounded-2xl border border-zinc-800"><table class="w-full text-sm"><thead class="bg-zinc-900"><tr class="text-left text-xs uppercase text-zinc-500"><th class="px-4 py-4">Tanggal</th><th class="px-4 py-4">Kelompok</th><th class="px-4 py-4">Latihan</th><th class="px-4 py-4">Set</th><th class="px-4 py-4">Reps</th><th class="px-4 py-4">Beban</th><th class="px-4 py-4 text-right">Aksi</th></tr></thead><tbody id="historyTableBody"></tbody></table></div>
+<div id="mobileHistory" class="md:hidden space-y-3"></div><div id="emptyHistory" class="py-14 text-center border border-dashed border-zinc-800 rounded-2xl"><div class="text-4xl mb-3">🏋️</div><h3 class="font-bold">Belum ada workout</h3><p class="text-sm text-zinc-500">Tambahkan latihan pertamamu.</p></div></div>
+</section>
+</main>
+<footer class="border-t border-zinc-900 mt-12"><div class="max-w-7xl mx-auto px-4 py-8 text-center"><p class="text-sm font-bold">WORKOUT<span class="text-limeSport">TRACKER</span></p><p class="text-xs text-zinc-600 mt-2">Your consistency is your superpower.</p></div></footer>
+
+<script>
+const exercises=[
+{id:"bench-press",name:"Bench Press",muscle:"Dada",description:"Membangun massa otot dada keseluruhan.",icon:"🏋️"},
+{id:"push-up",name:"Push-Up",muscle:"Dada",description:"Latihan beban tubuh terbaik untuk dada dan tricep.",icon:"💪"},
+{id:"pull-up-lat-pulldown",name:"Pull-Up / Lat Pulldown",muscle:"Punggung",description:"Terbaik untuk melebarkan punggung.",icon:"🧗"},
+{id:"bent-over-row",name:"Bent-Over Row",muscle:"Punggung",description:"Menebalkan otot punggung tengah.",icon:"🏋️"},
+{id:"squat",name:"Squat",muscle:"Kaki",description:"Latihan nomor satu untuk paha dan bokong.",icon:"🦵"},
+{id:"romanian-deadlift",name:"Romanian Deadlift",muscle:"Kaki",description:"Fokus pada otot paha belakang dan glutes.",icon:"🏋️"},
+{id:"overhead-press",name:"Overhead Press",muscle:"Bahu",description:"Membangun kekuatan dan ukuran bahu keseluruhan.",icon:"💪"},
+{id:"lateral-raise",name:"Lateral Raise",muscle:"Bahu",description:"Membuat bahu terlihat lebih lebar.",icon:"🔥"},
+{id:"bicep-curl",name:"Bicep Curl",muscle:"Lengan & Inti",description:"Latihan isolasi untuk membangun otot bicep.",icon:"💪"},
+{id:"planks",name:"Planks",muscle:"Lengan & Inti",description:"Latihan terbaik untuk stabilitas core.",icon:"🧱"}];
+const K={workouts:"workoutTracker_workouts",dream:"workoutTracker_dreamBody"};
+let workouts=JSON.parse(localStorage.getItem(K.workouts)||"[]");
+const $=id=>document.getElementById(id), esc=x=>String(x).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+function exercise(id){return exercises.find(x=>x.id===id)}
+function date(x){return new Date(x).toLocaleDateString("id-ID",{day:"2-digit",month:"short",year:"numeric"})}
+function renderExercises(){$("exerciseGrid").innerHTML=exercises.map(e=>`<div class="exercise-card glass rounded-2xl p-5 border border-zinc-800"><div class="flex justify-between"><div class="w-11 h-11 rounded-xl bg-zinc-900 flex items-center justify-center text-xl">${e.icon}</div><span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-limeSport/10 text-limeSport">${esc(e.muscle)}</span></div><h3 class="mt-5 font-black text-lg">${esc(e.name)}</h3><p class="mt-2 text-sm text-zinc-500">${esc(e.description)}</p></div>`).join("")}
+function renderSelect(){$("exerciseSelect").innerHTML='<option value="">Pilih latihan...</option>'+exercises.map(e=>`<option value="${e.id}">${esc(e.name)}</option>`).join("")}
+function save(){localStorage.setItem(K.workouts,JSON.stringify(workouts))}
+function render(){
+let rows=[...workouts].sort((a,b)=>new Date(b.date)-new Date(a.date));
+$("historyTableBody").innerHTML=rows.map(w=>{let e=exercise(w.exerciseId);return `<tr class="border-t border-zinc-800"><td class="px-4 py-4 text-zinc-400">${date(w.date)}</td><td class="px-4 py-4 text-cyan-400">${esc(e.muscle)}</td><td class="px-4 py-4 font-bold">${esc(e.name)}</td><td class="px-4 py-4">${w.sets}</td><td class="px-4 py-4">${w.reps}</td><td class="px-4 py-4 font-bold">${w.weight} kg</td><td class="px-4 py-4 text-right"><button data-id="${w.id}" class="del text-red-400 text-xs font-bold">Hapus</button></td></tr>`}).join("");
+$("mobileHistory").innerHTML=rows.map(w=>{let e=exercise(w.exerciseId);return `<div class="rounded-2xl bg-zinc-900 border border-zinc-800 p-4"><div class="flex justify-between"><div><p class="font-black">${esc(e.name)}</p><p class="text-xs text-zinc-500">${date(w.date)}</p></div><button data-id="${w.id}" class="del text-red-400 text-xs font-bold">Hapus</button></div><div class="grid grid-cols-3 gap-2 mt-4 text-center"><div class="bg-zinc-950 rounded-xl p-3"><small>SET</small><b class="block">${w.sets}</b></div><div class="bg-zinc-950 rounded-xl p-3"><small>REPS</small><b class="block">${w.reps}</b></div><div class="bg-zinc-950 rounded-xl p-3"><small>KG</small><b class="block">${w.weight}</b></div></div></div>`}).join("");
+$("emptyHistory").classList.toggle("hidden",rows.length>0);$("clearAllBtn").classList.toggle("hidden",rows.length===0);
+$("totalWorkout").textContent=workouts.length.toLocaleString("id-ID");
+$("totalVolume").textContent=workouts.reduce((s,w)=>s+w.sets*w.reps*w.weight,0).toLocaleString("id-ID");
+}
+$("workoutForm").onsubmit=e=>{e.preventDefault();let w={id:Date.now().toString(36)+Math.random().toString(36).slice(2),exerciseId:$("exerciseSelect").value,sets:+$("setsInput").value,reps:+$("repsInput").value,weight:+$("weightInput").value,date:new Date().toISOString()};if(!w.exerciseId||w.sets<1||w.reps<1||w.weight<0)return alert("Isi data dengan benar.");workouts.push(w);save();render();e.target.reset()};
+document.addEventListener("click",e=>{if(e.target.classList.contains("del")){workouts=workouts.filter(w=>w.id!==e.target.dataset.id);save();render()}});
+$("clearAllBtn").onclick=()=>{if(confirm("Hapus semua riwayat workout?")){workouts=[];save();render()}};
+function loadDream(){let x=localStorage.getItem(K.dream);if(x){$("dreamBodyImage").src=x;$("dreamBodyEmpty").classList.add("hidden");$("dreamBodyPreview").classList.remove("hidden")}}
+$("dreamBodyInput").onchange=e=>{let f=e.target.files[0];if(!f)return;if(!f.type.startsWith("image/"))return alert("File harus berupa gambar.");if(f.size>5*1024*1024)return alert("Maksimal 5 MB.");let r=new FileReader();r.onload=()=>{try{localStorage.setItem(K.dream,r.result);loadDream()}catch{alert("LocalStorage penuh.")}};r.readAsDataURL(f)};
+$("removeDreamBody").onclick=()=>{if(confirm("Hapus foto Dream Body?")){localStorage.removeItem(K.dream);$("dreamBodyImage").src="";$("dreamBodyPreview").classList.add("hidden");$("dreamBodyEmpty").classList.remove("hidden");$("dreamBodyInput").value=""}};
+renderExercises();renderSelect();render();loadDream();
+</script>
+</body></html>
