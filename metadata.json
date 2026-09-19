@@ -1,6 +1,0 @@
-{
-  "name": "Jadwal & Latihan Olahraga",
-  "description": "Aplikasi jadwal latihan mingguan, panduan gerakan barbel & bodyweight, dan pelacak Dream Body dengan penyimpanan lokal.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
